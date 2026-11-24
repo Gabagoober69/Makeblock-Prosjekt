@@ -1,31 +1,44 @@
-#include "CrsfRx.h"
-CrsfRx radio;
-uint32_t printed = 0;
-uint8_t nextChannel = 0;
-bool printing = false;
-uint16_t snapshot[16];
-bool snapshotAlive = false;
+// =====================================================================
+//  ChannelMonitor – viser kanalene bilen bruker, 20 ganger i sekundet
+// =====================================================================
+//  Brukes til å sjekke radioen før kjøring, sammen med GraphicMonitor på
+//  PC-en (eller Serial Monitor). Motorene holdes av hele tiden.
+//  Lastes opp i stedet for RobotControl.
+//
+//  Eksempel på linje:  OK CH2=992 CH4=992 CH5=191 CH6=191
+//    OK / LOST = radiokontakt / ingen radiokontakt
+//    CH2 frem/revers   CH4 sving   CH5 SA (191 = ned)   CH6 SF lyd
+//
+//  Fanen Radio er en kopi av den i RobotControl.
+
+const int SHOWN_CHANNELS[4] = {2, 4, 5, 6};  // kanalene som skrives ut
+unsigned long lastPrint = 0;                 // når forrige linje ble skrevet (millis)
 
 void setup() {
-  // Orion M1/M2 PWM outputs: disable motors even in this diagnostic sketch.
-  pinMode(6, OUTPUT); analogWrite(6, 0);
-  pinMode(5, OUTPUT); analogWrite(5, 0);
+  pinMode(6, OUTPUT);  analogWrite(6, 0);   // venstre motor (M1) av
+  pinMode(5, OUTPUT);  analogWrite(5, 0);   // høyre motor (M2) av
   Serial.begin(115200);
 }
 
 void loop() {
-  radio.poll();
-  if (!printing && millis()-printed >= 50) { // 20 snapshots per second.
-    // A complete output line represents one snapshot of all channels.
-    for (uint8_t i=0; i<16; ++i) snapshot[i] = radio.ch[i];
-    snapshotAlive = radio.alive();
-    printed = millis(); nextChannel = 0; printing = true;
-  }
-  // Small writes keep the main loop servicing incoming CRSF bytes.
-  if (printing && Serial.availableForWrite() >= 24) {
-    if (nextChannel == 0) Serial.print(snapshotAlive ? F("OK ") : F("LOST "));
-    Serial.print(F("CH")); Serial.print(nextChannel+1);
-    Serial.print('='); Serial.print(snapshot[nextChannel]); Serial.print(' ');
-    if (++nextChannel == 16) { Serial.println(); printing = false; }
+  readRadio();
+
+  // Skriv bare når hele linjen får plass i utbufferen, så vi aldri venter
+  // og går glipp av radiobytes.
+  if (millis() - lastPrint >= 50 && Serial.availableForWrite() >= 48) {
+    lastPrint = millis();
+
+    if (radioLink()) {
+      Serial.print("OK");
+    } else {
+      Serial.print("LOST");
+    }
+    for (int i = 0; i < 4; i++) {
+      Serial.print(" CH");
+      Serial.print(SHOWN_CHANNELS[i]);
+      Serial.print("=");
+      Serial.print(readChannel(SHOWN_CHANNELS[i]));
+    }
+    Serial.println();
   }
 }
