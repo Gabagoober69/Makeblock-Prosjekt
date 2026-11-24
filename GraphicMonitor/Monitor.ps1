@@ -75,7 +75,7 @@ $baud.Text='115200 baud / 8N1'; $baud.AutoSize=$true; $baud.Padding=New-Object S
 $toolbar.Controls.AddRange(@($portBox,$refresh,$connect,$demoButton,$baud))
 $layout.Controls.Add($toolbar,0,1)
 $status = New-Object System.Windows.Forms.Label
-$status.Text='FRAKOBLET - velg COM-port. Last opp ChannelMonitor til Orion.'
+$status.Text='FRAKOBLET - velg COM-port. RobotControl maa vaere lastet opp til Orion.'
 $status.Dock='Fill'; $status.TextAlign='MiddleLeft'
 $layout.Controls.Add($status,0,2)
 
@@ -168,7 +168,7 @@ $connect.Add_Click({
         $script:serial.Open(); $script:serial.DiscardInBuffer()
         $script:buffer=''; $script:lastFrame=[datetime]::MinValue
         $connect.Text='Koble fra'; $portBox.Enabled=$false; $refresh.Enabled=$false
-        $status.Text='VENTER - koblet til, venter paa ChannelMonitor-data.'
+        $status.Text='VENTER - koblet til, venter paa data fra RobotControl.'
     } catch {
         $detail=$_.Exception.Message; Close-Port
         $status.Text="PORTFEIL: $detail Lukk Arduino Serial Monitor og andre terminaler."
@@ -223,7 +223,7 @@ $timer.Add_Tick({
                 $status.Text="LIVE - $($script:serial.PortName) | kanaldata opptil 20 ganger/s"
                 $status.ForeColor=[System.Drawing.Color]::LightGreen
             } else {
-                $status.Text='INGEN GYLDIG RADIOINPUT - gamle verdier vises i graatt. Kontroller radio, mottaker og at ChannelMonitor er lastet opp.'
+                $status.Text='INGEN GYLDIG RADIOINPUT - gamle verdier vises i graatt. Kontroller radio, mottaker og at RobotControl er lastet opp.'
                 $status.ForeColor=[System.Drawing.Color]::Orange
             }
             foreach ($v in $script:values) { $v.ForeColor=if ($live) { [System.Drawing.Color]::WhiteSmoke } else { [System.Drawing.Color]::Gray } }

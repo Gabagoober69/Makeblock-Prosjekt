@@ -1,8 +1,8 @@
 function ConvertFrom-ChannelLine {
-    # Reads one text line from ChannelMonitor, for example:
+    # Reads one channel line from RobotControl, for example:
     #   OK CH2=992 CH4=992 CH5=191 CH6=191
     # Returns State (OK or LOST) and Values, a hashtable: channel number -> raw value.
-    # Returns $null if the line is malformed or a required channel is missing.
+    # Returns $null for other lines (status lines) or if a required channel is missing.
     param([string]$Line, [int[]]$Required = @())
     if ($Line -notmatch '^(OK|LOST)\s+(.+?)\s*$') { return $null }
     $state = $Matches[1]
