@@ -4,7 +4,7 @@
 
 1. Last ned eller klon repoet og pakk det ut om nødvendig. Ikke start programmet direkte inne i ZIP-filen.
 2. Last opp `ChannelMonitor/ChannelMonitor.ino` til Orion. Behold `CrsfRx.h` i samme mappe. Motorutgangene er avslatt i dette programmet.
-3. Bruk UART-koblingen beskrevet i ../docs/KOBLINGER.md. Mottaker-TX til Orion RX, felles GND og 5 V forsyning. Matek RX skal ikke kobles til Orion TX i denne losningen.
+3. Mottaker-TX til Orion RX, felles GND og 5 V forsyning. Matek RX skal ikke kobles til Orion TX i denne losningen.
 4. Lukk Arduino Serial Monitor og andre programmer som bruker samme COM-port.
 5. Dobbeltklikk `Start-Monitor.cmd`. Velg COM-port og trykk **Koble til**. Hastigheten er fast 115200 baud, 8N1.
 6. Beveg spaker og brytere. Alle 16 kanalene vises som fargede, vertikale stolper i to rader, med raverdier og prosent. Stolpene stiger fra -100 % nederst til +100 % overst; halv hoyde tilsvarer 0 %. CH4/CH2/CH5-navnene er forventet miks, ikke automatisk identifikasjon av spakene.
@@ -29,7 +29,7 @@ At 16 felt vises betyr ikke at alle er aktive over radio. Bruk kompatibel 16-kan
 ## Det som gjenstar pa roboten
 
 - Bekreft vanlig, ikke-invertert CRSF og mottaker-UART 115200 (allerede satt).
-- Avklar delt USB/UART pa Orion for det aktuelle kortet: to TX-utganger ma ikke drive D0 samtidig. En ekstern terminaladapter alene isolerer ikke USB-brikkens TX. Se ../README.md og ../docs/KOBLINGER.md for detaljer.
+- Avklar delt USB/UART pa Orion for det aktuelle kortet: to TX-utganger ma ikke drive D0 samtidig. En ekstern terminaladapter alene isolerer ikke USB-brikkens TX. Se ../README.md for prosjektinformasjon.
 - Koble fra mottakerens TX under opplasting. Fjern Orion TX -> Matek RX for denne losningen.
 - Kontroller miks: CH4 = venstre X (antatt etter at CH1 viste seg aa vaere hoyre X), CH2 = hoyre Y og CH5 = SA; SA skal bare gi hoy verdi i valgt armeringsstilling.
 - Test kanalmonitoren forst. Senter skal ligge rundt 992. CH4 skal oke mot hoyre, CH2 fremover, og CH5 skal bli hoy bare ved armering.

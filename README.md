@@ -1,6 +1,6 @@
 # Makeblock Orion med ExpressLRS
 
-Fjernstyrt Makeblock Starter Kit-belterobot med Orion, Matek R24-D og RadioMaster TX15 Max. Prosjektet inneholder Arduino-kode, en grafisk Windows-monitor og komponentdokumentasjon.
+Fjernstyrt Makeblock Starter Kit-belterobot med Orion, Matek R24-D og RadioMaster TX15 Max. Prosjektet inneholder Arduino-kode, en grafisk Windows-monitor.
 
 ## Gjeldende status
 
@@ -17,8 +17,6 @@ Fjernstyrt Makeblock Starter Kit-belterobot med Orion, Matek R24-D og RadioMaste
 | --- | --- |
 | `ChannelMonitor/` | Arduino-program som leser 16 CRSF-kanalfelt og skriver dem som tekst |
 | `GraphicMonitor/` | Grafisk Windows-monitor med fargede stolper og utjevning |
-| `docs/Makeblock_Orion_komponenter_og_begrensninger.docx` | Komponentoversikt og begrensninger |
-| `docs/KOBLINGER.md` | Kabling, kanaloppsett og kjente begrensninger |
 
 ## Maskinvare
 
