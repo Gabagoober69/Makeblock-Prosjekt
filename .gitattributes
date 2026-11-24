@@ -1,0 +1,10 @@
+* text=auto
+*.ino text eol=lf
+*.h text eol=lf
+*.cs text eol=lf
+*.md text eol=lf
+*.ps1 text eol=crlf
+*.psm1 text eol=crlf
+*.cmd text eol=crlf
+*.docx binary
+*.png binary

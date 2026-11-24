@@ -1,0 +1,24 @@
+# Arduino build products
+build/
+*.hex
+*.elf
+*.o
+*.a
+*.bin
+
+# Local/editor/temp files
+.DS_Store
+Thumbs.db
+~$*.docx
+*.tmp
+*.log
+.vscode/
+
+# Never commit credentials
+.env
+.env.*
+!.env.example
+secrets/
+
+# Generated distribution archives
+*.zip
