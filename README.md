@@ -15,7 +15,6 @@ Fjernstyrt Makeblock Starter Kit-belterobot med Orion, Matek R24-D og RadioMaste
 
 | Mappe eller fil | Innhold |
 | --- | --- |
-| `RobotControl/` | Arduino-program for kjøring, armering, signalbruddsstopp og buzzer |
 | `ChannelMonitor/` | Arduino-program som leser 16 CRSF-kanalfelt og skriver dem som tekst |
 | `GraphicMonitor/` | Grafisk Windows-monitor med fargede stolper og utjevning |
 | `docs/Makeblock_Orion_komponenter_og_begrensninger.docx` | Komponentoversikt og begrensninger |
@@ -30,16 +29,9 @@ Fjernstyrt Makeblock Starter Kit-belterobot med Orion, Matek R24-D og RadioMaste
 - Ultralydsensor i port 3, IR-enhet i port 7 og ELRS i port 5.
 - Seks alkaliske 1,5 V-batterier i serie, 9 V nominelt. PWM er ikke en regulert 6 V-forsyning.
 
-## Last opp kjøreprogrammet
+## Kjøreprogram
 
-1. Lukk den grafiske monitoren og Arduino Seriell monitor.
-2. Koble fra batteriet og ELRS-signalet i port 5 før opplasting.
-3. Åpne `RobotControl/RobotControl.ino`. Behold `CrsfRx.h` i samme mappe.
-4. Velg **Arduino Uno** og riktig COM-port, og last opp via USB.
-5. Koble fra strøm før kablene settes tilbake. Test med beltene løftet og SA av.
-6. Hold begge styreaksene i senter med SA av i minst ett sekund. Sett deretter SA til armert.
-
-SA av stopper motorpådraget. Ved signalbrudd kreves ny armering. Automatisk hindringsstopp er foreløpig ikke aktiv.
+RobotControl er fjernet fra repoet. Beskrivelsen av kjøreoppsettet nedenfor er beholdt som prosjektinformasjon; kjøreprogrammet følger ikke med.
 
 ## Radioens Mixes
 
@@ -54,7 +46,7 @@ Orion mottar kanalverdier, ikke bryternavn. For å bruke SF må CH6-kilden sette
 
 ## Grafisk kanalmonitor
 
-1. Last opp `ChannelMonitor/ChannelMonitor.ino` i stedet for kjøreprogrammet.
+1. Last opp `ChannelMonitor/ChannelMonitor.ino`. Behold `CrsfRx.h` i samme mappe.
 2. Lukk Arduino Seriell monitor.
 3. På Windows: start `GraphicMonitor/Start-Monitor.cmd`, velg COM-port og koble til.
 
