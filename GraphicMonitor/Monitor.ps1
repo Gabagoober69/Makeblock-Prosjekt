@@ -6,6 +6,18 @@ Add-Type -Path (Join-Path $PSScriptRoot 'ChannelBar.cs') -ReferencedAssemblies S
 Import-Module (Join-Path $PSScriptRoot 'ChannelProtocol.psm1') -Force
 [System.Windows.Forms.Application]::EnableVisualStyles()
 
+# ---- Channels used by RobotControl (must match the settings in RobotControl.ino) ----
+$channels = @(
+    [pscustomobject]@{ Ch=2; Role='GASS';     Hint='hoyre spak opp/ned';     Kind='stick'; Color='#38BDF8' },
+    [pscustomobject]@{ Ch=4; Role='STYRING';  Hint='venstre spak sideveis';  Kind='stick'; Color='#C084FC' },
+    [pscustomobject]@{ Ch=5; Role='SA';       Hint='hovedbryter';            Kind='arm';   Color='#34D399' },
+    [pscustomobject]@{ Ch=6; Role='SF';       Hint='robotlyd';               Kind='sound'; Color='#FBBF24' }
+)
+$required = [int[]]($channels | ForEach-Object { $_.Ch })
+$SwitchHigh   = 1500    # raw >= this = switch high (RobotControl.ino SWITCH_HIGH)
+$SwitchLow    = 484     # raw <= this = switch low  (RobotControl.ino SWITCH_LOW)
+$SaDownIsHigh = $false  # measured on this radio: SA down = 191 (low)
+
 $script:serial = $null
 $script:buffer = ''
 $script:lastFrame = [datetime]::MinValue
@@ -13,13 +25,12 @@ $script:linkState = 'LOST'
 $script:demo = $false
 $script:demoStart = Get-Date
 $script:bars = @()
-$script:labels = @()
 $script:values = @()
 
 $form = New-Object System.Windows.Forms.Form
-$form.Text = 'Orion ELRS | 16 kanaler'
-$form.Size = New-Object System.Drawing.Size(1350, 850)
-$form.MinimumSize = New-Object System.Drawing.Size(1100, 720)
+$form.Text = 'Orion ELRS | kanalmonitor'
+$form.Size = New-Object System.Drawing.Size(1000, 720)
+$form.MinimumSize = New-Object System.Drawing.Size(800, 600)
 $form.StartPosition = 'CenterScreen'
 $form.BackColor = [System.Drawing.Color]::FromArgb(20,26,38)
 $form.ForeColor = [System.Drawing.Color]::WhiteSmoke
@@ -68,45 +79,54 @@ $status.Text='FRAKOBLET - velg COM-port. Last opp ChannelMonitor til Orion.'
 $status.Dock='Fill'; $status.TextAlign='MiddleLeft'
 $layout.Controls.Add($status,0,2)
 
+# One card per used channel, side by side.
 $grid = New-Object System.Windows.Forms.TableLayoutPanel
-$grid.Dock='Fill'; $grid.ColumnCount=8; $grid.RowCount=2
-for ($i=0; $i -lt 8; $i++) {
-    [void]$grid.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle('Percent',12.5)))
+$grid.Dock='Fill'; $grid.ColumnCount=$channels.Count; $grid.RowCount=1
+for ($i=0; $i -lt $channels.Count; $i++) {
+    [void]$grid.ColumnStyles.Add((New-Object System.Windows.Forms.ColumnStyle('Percent',(100.0/$channels.Count))))
 }
-for ($i=0; $i -lt 2; $i++) {
-    [void]$grid.RowStyles.Add((New-Object System.Windows.Forms.RowStyle('Percent',50)))
-}
-$palette = @('#22D3EE','#38BDF8','#818CF8','#C084FC','#F472B6','#FB7185','#FB923C','#FBBF24',
-             '#A3E635','#34D399','#2DD4BF','#60A5FA','#A78BFA','#E879F9','#F97316','#FACC15')
-for ($i=0; $i -lt 16; $i++) {
+[void]$grid.RowStyles.Add((New-Object System.Windows.Forms.RowStyle('Percent',100)))
+for ($i=0; $i -lt $channels.Count; $i++) {
+    $c = $channels[$i]
+    $accent=[System.Drawing.ColorTranslator]::FromHtml($c.Color)
     $card = New-Object System.Windows.Forms.Panel
-    $card.Dock='Fill'; $card.Margin=New-Object System.Windows.Forms.Padding(5)
+    $card.Dock='Fill'; $card.Margin=New-Object System.Windows.Forms.Padding(6)
     $card.BackColor=[System.Drawing.Color]::FromArgb(32,42,58)
     $label = New-Object System.Windows.Forms.Label
-    $accent=[System.Drawing.ColorTranslator]::FromHtml($palette[$i])
-    $label.Text=('CH{0:00}' -f ($i+1)); $label.Dock='Top'; $label.Height=29
+    $label.Text=('CH{0} {1}' -f $c.Ch,$c.Role); $label.Dock='Top'; $label.Height=32
     $label.TextAlign='MiddleCenter'; $label.ForeColor=$accent
-    $label.Font=New-Object System.Drawing.Font('Segoe UI',13,[System.Drawing.FontStyle]::Bold)
+    $label.Font=New-Object System.Drawing.Font('Segoe UI',14,[System.Drawing.FontStyle]::Bold)
     $role = New-Object System.Windows.Forms.Label
-    $role.Text='AUX'; $role.Dock='Top'; $role.Height=22; $role.TextAlign='MiddleCenter'
-    if ($i -eq 3) { $role.Text='STYRING' }
-    if ($i -eq 1) { $role.Text='GASS' }
-    if ($i -eq 4) { $role.Text='SA / CH5' }
-    if ($i -eq 5) { $role.Text='SF / ROBOTLYD' }
+    $role.Text=$c.Hint; $role.Dock='Top'; $role.Height=24; $role.TextAlign='MiddleCenter'
     $value = New-Object System.Windows.Forms.Label
-    $value.Text='--'; $value.Dock='Bottom'; $value.Height=47; $value.TextAlign='MiddleCenter'
-    $value.Font=New-Object System.Drawing.Font('Consolas',11)
+    $value.Text='--'; $value.Dock='Bottom'; $value.Height=52; $value.TextAlign='MiddleCenter'
+    $value.Font=New-Object System.Drawing.Font('Consolas',12)
     $bar = New-Object OrionChannelBar
     $bar.Dock='Fill'; $bar.Accent=$accent
     $card.Controls.AddRange(@($bar,$value,$role,$label))
-    $grid.Controls.Add($card,($i%8),[int][Math]::Floor($i/8))
-    $script:bars += $bar; $script:labels += $label; $script:values += $value
+    $grid.Controls.Add($card,$i,0)
+    $script:bars += $bar; $script:values += $value
 }
 $layout.Controls.Add($grid,0,3)
 $footer = New-Object System.Windows.Forms.Label
-$footer.Text="Stolper: -100% nederst / 0% ved midtlinjen / +100% overst. CRSF: ca. 172 / 992 / 1811.`r`nKun visning. Graa stolper = gamle verdier. CH-navn viser forventet miks; ELRS-modus bestemmer aktive kanaler."
+$footer.Text="Stolper: -100% nederst / 0% ved midtlinjen / +100% overst. CRSF: ca. 172 / 992 / 1811.`r`nKun visning. Graa stolper = gamle verdier. Roboten er bare aktiv med SA NED og radiokontakt."
 $footer.Dock='Fill'; $footer.TextAlign='MiddleLeft'
 $layout.Controls.Add($footer,0,4)
+
+# Plain-language state for switch channels.
+function Get-StateText([string]$Kind, [int]$Raw) {
+    $high = $Raw -ge $SwitchHigh
+    $low  = $Raw -le $SwitchLow
+    if ($Kind -eq 'arm') {
+        $down = if ($SaDownIsHigh) { $high } else { $low }
+        $up   = if ($SaDownIsHigh) { $low }  else { $high }
+        if ($down) { return 'NED = AKTIV' }
+        if ($up)   { return 'OPP = AV' }
+        return 'UKJENT'
+    }
+    if ($Kind -eq 'sound') { if ($high) { return 'PAA' } else { return 'AV' } }
+    return ''
+}
 
 function Update-Ports {
     $selected=$portBox.Text
@@ -124,10 +144,16 @@ function Close-Port {
     $connect.Text='Koble til'; $portBox.Enabled=$true; $refresh.Enabled=$true
 }
 function Show-Values($frame) {
-    for ($i=0; $i -lt 16; $i++) {
-        $pct=Get-ChannelPercent $frame.Values[$i]
+    for ($i=0; $i -lt $channels.Count; $i++) {
+        $c=$channels[$i]
+        $raw=[int]$frame.Values[$c.Ch]
+        $pct=Get-ChannelPercent $raw
         $script:bars[$i].Percent=$pct
-        $script:values[$i].Text=("{0:+0;-0;0}%`r`nRAW {1}" -f $pct,$frame.Values[$i])
+        if ($c.Kind -eq 'stick') {
+            $script:values[$i].Text=("{0:+0;-0;0}%`r`nRAW {1}" -f $pct,$raw)
+        } else {
+            $script:values[$i].Text=("{0}`r`nRAW {1}" -f (Get-StateText $c.Kind $raw),$raw)
+        }
     }
 }
 $refresh.Add_Click({ Update-Ports })
@@ -164,7 +190,12 @@ $timer.Add_Tick({
     foreach ($b in $script:bars) { $b.AdvanceAnimation($elapsed) }
     if ($script:demo) {
         $t=((Get-Date)-$script:demoStart).TotalSeconds
-        $data=for ($i=0; $i -lt 16; $i++) { [int](992+780*[Math]::Sin($t*0.8+$i*0.45)) }
+        $data=@{}
+        for ($i=0; $i -lt $channels.Count; $i++) {
+            $c=$channels[$i]
+            if ($c.Kind -eq 'stick') { $data[$c.Ch]=[int](992+780*[Math]::Sin($t*0.8+$i*1.3)) }
+            else { $data[$c.Ch]=if ([Math]::Floor($t/3+$i) % 2) { 1792 } else { 191 } }
+        }
         Show-Values ([pscustomobject]@{ Values=$data })
         $status.ForeColor=[System.Drawing.Color]::Gold
         foreach ($v in $script:values) { $v.ForeColor=[System.Drawing.Color]::Gold }
@@ -178,7 +209,7 @@ $timer.Add_Tick({
             $script:buffer=$lines[-1]
             $latest=$null
             for ($i=0; $i -lt $lines.Count-1; $i++) {
-                $parsed=ConvertFrom-ChannelLine $lines[$i].TrimEnd("`r")
+                $parsed=ConvertFrom-ChannelLine $lines[$i].TrimEnd("`r") $required
                 if ($null -ne $parsed) { $latest=$parsed }
             }
             if ($script:buffer.Length -gt 8192) { $script:buffer='' }
@@ -189,10 +220,10 @@ $timer.Add_Tick({
             $age=((Get-Date)-$script:lastFrame).TotalMilliseconds
             $live=$age -lt 1000 -and $script:linkState -eq 'OK'
             if ($live) {
-                $status.Text="LIVE - $($script:serial.PortName) | jevne stolper | kanaldata opptil 20 ganger/s"
+                $status.Text="LIVE - $($script:serial.PortName) | kanaldata opptil 20 ganger/s"
                 $status.ForeColor=[System.Drawing.Color]::LightGreen
             } else {
-                $status.Text='INGEN GYLDIG RADIOINPUT - gamle verdier vises i graatt. Kontroller mottaker, kobling og firmware.'
+                $status.Text='INGEN GYLDIG RADIOINPUT - gamle verdier vises i graatt. Kontroller radio, mottaker og at ChannelMonitor er lastet opp.'
                 $status.ForeColor=[System.Drawing.Color]::Orange
             }
             foreach ($v in $script:values) { $v.ForeColor=if ($live) { [System.Drawing.Color]::WhiteSmoke } else { [System.Drawing.Color]::Gray } }
@@ -213,8 +244,7 @@ Update-Ports
 if ($PreviewPath) {
     $status.Text='DEMO - simulerte verdier, ingen radio tilkoblet.'
     $status.ForeColor=[System.Drawing.Color]::Gold
-    $sample=for ($i=0; $i -lt 16; $i++) { [int](172+1639*($i%8)/7) }
-    Show-Values ([pscustomobject]@{ Values=$sample })
+    Show-Values ([pscustomobject]@{ Values=@{ 2=1500; 4=700; 5=191; 6=191 } })
     foreach ($b in $script:bars) { $b.Live=$true }
     [void]$form.Handle
     $form.PerformLayout(); $layout.PerformLayout(); $grid.PerformLayout()
