@@ -15,8 +15,8 @@
 
 // ============================ INNSTILLINGER ============================
 
-const int CH_THROTTLE = 2;   // høyre spak opp/ned: frem/revers
-const int CH_STEER    = 4;   // venstre spak sideveis: sving
+const int CH_THROTTLE = 3;   // venstre spak opp/ned: frem/revers
+const int CH_STEER    = 1;   // høyre spak sideveis: sving
 const int CH_SA       = 5;   // bryter SA: hovedbryter (191 = ned)
 const int CH_SOUND    = 6;   // bryter SF: robotlyd
 
@@ -26,7 +26,8 @@ const int SWITCH_LOW  = 484;   // bryterverdi under dette = lav (191)
 const int DEADBAND_THROTTLE = 80;   // 8 %: spaken må forbi dette før bilen kjører
 const int DEADBAND_STEER    = 30;   // 3 %
 const int CENTER_TOLERANCE  = 100;  // spakene må være innenfor 10 % for å starte
-const bool INVERT_STEER     = true; // speilvendt styring
+const bool INVERT_THROTTLE  = false; // true hvis bilen kjører bakover når spaken skyves frem
+const bool INVERT_STEER     = true;  // speilvendt styring
 
 const int LEFT_PWM = 6,  LEFT_DIR = 7;   // venstre motor (M1): fart- og retningspinne
 const int RIGHT_PWM = 5, RIGHT_DIR = 4;  // høyre motor (M2)
@@ -89,6 +90,7 @@ void loop() {
 void control() {
   throttle = stickValue(readChannel(CH_THROTTLE), DEADBAND_THROTTLE);
   steer    = stickValue(readChannel(CH_STEER), DEADBAND_STEER);
+  if (INVERT_THROTTLE) throttle = -throttle;
   if (INVERT_STEER) steer = -steer;
 
   bool saDown = readChannel(CH_SA) <= SWITCH_LOW;
@@ -276,14 +278,14 @@ void updateSound() {
 
 // ============================= UTSKRIFT TIL PC =============================
 
-// Kanallinje til GraphicMonitor, f.eks. "OK CH2=992 CH4=992 CH5=191 CH6=191".
+// Kanallinje til GraphicMonitor, f.eks. "OK CH3=992 CH1=992 CH5=191 CH6=191".
 // OK = radiokontakt, LOST = signalbrudd.
 void printChannels() {
   Serial.print(radioLink() ? "OK" : "LOST");
-  Serial.print(" CH2="); Serial.print(readChannel(2));
-  Serial.print(" CH4="); Serial.print(readChannel(4));
-  Serial.print(" CH5="); Serial.print(readChannel(5));
-  Serial.print(" CH6="); Serial.println(readChannel(6));
+  Serial.print(" CH"); Serial.print(CH_THROTTLE); Serial.print("="); Serial.print(readChannel(CH_THROTTLE));
+  Serial.print(" CH"); Serial.print(CH_STEER);    Serial.print("="); Serial.print(readChannel(CH_STEER));
+  Serial.print(" CH"); Serial.print(CH_SA);       Serial.print("="); Serial.print(readChannel(CH_SA));
+  Serial.print(" CH"); Serial.print(CH_SOUND);    Serial.print("="); Serial.println(readChannel(CH_SOUND));
 }
 
 // Statuslinje til Serial Monitor, f.eks. "ARMED T=500 S=0 L=500 R=500".
