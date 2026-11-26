@@ -1,9 +1,9 @@
 // =====================================================================
-//  RobotControl – styrer Orion-beltebilen med RC-radio (alt i én fil)
+//  RobotControl – styrer Orion med RC-radio
 // =====================================================================
 //  Gjør tre ting samtidig:
 //    1. Leser radioen og kjører motorene.
-//    2. Spiller robotlyden når SF slås på.
+//    2. Spiller av lyd når SF-spaken slås på.
 //    3. Sender kanalverdier og status til PC-en via USB, slik at
 //       GraphicMonitor (eller Serial Monitor) kan vise dem mens bilen kjører.
 //
@@ -15,8 +15,8 @@
 
 // ============================ INNSTILLINGER ============================
 
-const int CH_THROTTLE = 3;   // venstre spak opp/ned: frem/revers
-const int CH_STEER    = 1;   // høyre spak sideveis: sving
+const int CH_THROTTLE = 1;   // venstre spak opp/ned: frem/revers
+const int CH_STEER    = 3;   // høyre spak sideveis: sving
 const int CH_SA       = 5;   // bryter SA: hovedbryter (191 = ned)
 const int CH_SOUND    = 6;   // bryter SF: robotlyd
 
@@ -34,7 +34,7 @@ const int RIGHT_PWM = 5, RIGHT_DIR = 4;  // høyre motor (M2)
 const bool INVERT_LEFT = false, INVERT_RIGHT = false;  // true hvis et belte går feil vei
 
 const int MAX_PWM   = 160;  // toppfart av 255 (9 V batteri på 6 V-motorer: ikke øk)
-const int RAMP_STEP = 40;   // maks fartsendring per 10 ms → 0 til full fart på 0,25 s
+const int RAMP_STEP = 40;   // maks fartsendring per 10 ms → 0 til full fart på 0,25 s (kontrollerer akselerasjon
 
 const int BUZZER_PIN = A5;  // buzzeren på Orion (BUZZER-bryteren må stå på ON)
 
